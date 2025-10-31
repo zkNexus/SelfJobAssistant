@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { generateCoverLetter } from "@/lib/ai-service";
+import { sendCoverLetterEmail } from "@/lib/email-service";
 
 // Input validation schema
 const coverLetterRequestSchema = z.object({
-  email: z.string().email("Invalid email address").optional(),
+  email: z.string().email("Invalid email address"),
   jobDescription: z.string().min(50, "Job description too short").max(5000, "Job description too long"),
   resume: z.string().min(100, "Resume too short").max(10000, "Resume too long"),
   companyName: z.string().max(200).optional(),
@@ -45,12 +46,31 @@ export async function POST(request: NextRequest) {
 
     console.log("Cover letter generated successfully");
 
+    // Send email with cover letter
+    console.log(`Sending cover letter to: ${email}`);
+    try {
+      await sendCoverLetterEmail({
+        to: email,
+        subject: positionTitle && companyName
+          ? `Your Cover Letter for ${positionTitle} at ${companyName}`
+          : "Your AI-Generated Cover Letter",
+        coverLetter,
+        companyName,
+        positionTitle,
+      });
+      console.log("Email sent successfully");
+    } catch (emailError) {
+      console.error("Failed to send email:", emailError);
+      // Continue with response even if email fails
+    }
+
     // Return success response with full cover letter
     return NextResponse.json(
       {
         success: true,
-        message: "Cover letter generated successfully",
+        message: "Cover letter generated and sent to your email",
         coverLetter, // Return full cover letter
+        sentTo: email,
         companyName,
         positionTitle,
         generatedAt: new Date().toISOString(),
