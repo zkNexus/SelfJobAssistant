@@ -408,14 +408,24 @@ export default function HomePage() {
 
         <main className="container mx-auto px-4 py-12">
           <div className="max-w-6xl mx-auto">
-            {!paymentCompleted ? (
-              <div className="max-w-4xl mx-auto space-y-6">
-                <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-bold">Complete Payment</h2>
-                  <p className="text-muted-foreground">
-                    Pay $0.001 USDC to generate your cover letter
-                  </p>
-                </div>
+            <div className={`grid gap-8 items-start ${paymentCompleted ? 'lg:grid-cols-[1fr,1.2fr]' : 'grid-cols-1'}`}>
+              {/* Payment Form - Always rendered, never unmounted */}
+              <div className={`space-y-4 ${!paymentCompleted ? 'max-w-4xl mx-auto' : ''}`}>
+                {!paymentCompleted && (
+                  <div className="text-center space-y-2 mb-6">
+                    <h2 className="text-3xl font-bold">Complete Payment</h2>
+                    <p className="text-muted-foreground">
+                      Pay $0.001 USDC to generate your cover letter
+                    </p>
+                  </div>
+                )}
+
+                {paymentCompleted && (
+                  <div className="text-center mb-4">
+                    <h3 className="text-2xl font-bold mb-2">Payment Receipt</h3>
+                    <p className="text-sm text-muted-foreground">Transaction completed successfully</p>
+                  </div>
+                )}
 
                 <PaymentForm
                   vendorUrl={vendorUrl}
@@ -429,37 +439,20 @@ export default function HomePage() {
                   wagmiConfig={wagmiConfigProp}
                 />
 
-                <div className="text-center">
-                  <Button
-                    variant="ghost"
-                    onClick={() => setCurrentStep("form")}
-                  >
-                    Back to Form
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="grid lg:grid-cols-[1fr,1.2fr] gap-8 items-start">
-                {/* Left: Payment Receipt */}
-                <div className="space-y-4">
+                {!paymentCompleted && (
                   <div className="text-center">
-                    <h3 className="text-2xl font-bold mb-2">Payment Receipt</h3>
-                    <p className="text-sm text-muted-foreground">Transaction completed successfully</p>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setCurrentStep("form")}
+                    >
+                      Back to Form
+                    </Button>
                   </div>
-                  <PaymentForm
-                    vendorUrl={vendorUrl}
-                    apiEndpoint={apiEndpoint}
-                    requestMethod="POST"
-                    requestBody={formData}
-                    onPaymentSuccess={handlePaymentSuccess}
-                    onPaymentFailure={handlePaymentFailure}
-                    showDeepLink="both"
-                    buttonText="Pay $0.001 & Generate Cover Letter"
-                    wagmiConfig={wagmiConfigProp}
-                  />
-                </div>
+                )}
+              </div>
 
-                {/* Right: Success Message */}
+              {/* Success Message - Only shown after payment */}
+              {paymentCompleted && (
                 <div className="flex items-start justify-center pt-8">
                   <Card className="w-full max-w-xl">
                     <CardContent className="pt-8 pb-8">
@@ -513,8 +506,8 @@ export default function HomePage() {
                     </CardContent>
                   </Card>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </main>
       </div>
