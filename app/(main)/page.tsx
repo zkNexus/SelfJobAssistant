@@ -437,6 +437,7 @@ export default function HomePage() {
                   showDeepLink="both"
                   buttonText="Pay $0.001 & Generate Cover Letter"
                   wagmiConfig={wagmiConfigProp}
+                  logoUrl="https://self-x402-pay.vercel.app/selfPay.png"
                 />
 
                 {!paymentCompleted && (
