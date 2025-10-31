@@ -27,12 +27,15 @@ export async function POST(request: NextRequest) {
         {
           error: "Payment required",
           message: "This endpoint requires x402 payment. Please include X-Payment header.",
-          price: "0.1",
+          price: "0.001",
           network: "celo",
         },
         { status: 402 } // HTTP 402 Payment Required
       );
     }
+
+    // Get settlement data from middleware (contains transaction hash)
+    const settlementData = (request as any).settlementData;
 
     console.log("Generating cover letter...");
 
@@ -64,7 +67,7 @@ export async function POST(request: NextRequest) {
       // Continue with response even if email fails
     }
 
-    // Return success response with full cover letter
+    // Return success response with full cover letter and settlement data
     return NextResponse.json(
       {
         success: true,
@@ -74,6 +77,20 @@ export async function POST(request: NextRequest) {
         companyName,
         positionTitle,
         generatedAt: new Date().toISOString(),
+        metadata: {
+          cost: "$0.001",
+          protocol: "x402 v1.0",
+          network: "celo",
+          facilitator: "Selfx402Facilitator",
+          timestamp: new Date().toISOString(),
+          message: "Payment verified and settled! This cover letter was delivered using x402 gasless micropayments.",
+          settlement: settlementData ? {
+            transaction: settlementData.transaction,
+            blockNumber: settlementData.blockNumber,
+            explorer: settlementData.explorer,
+            payer: settlementData.payer,
+          } : undefined,
+        },
       },
       { status: 200 }
     );
@@ -112,7 +129,7 @@ export async function GET() {
     endpoint: "/api/generate-cover-letter",
     method: "POST",
     description: "Generate personalized cover letter and send via email",
-    price: "0.1 USDC",
+    price: "0.001 USDC",
     network: "celo",
     inputSchema: {
       email: "string (email format, required)",
@@ -124,9 +141,23 @@ export async function GET() {
     outputSchema: {
       success: "boolean",
       message: "string",
-      coverLetter: "string (preview)",
+      coverLetter: "string (full cover letter text)",
       sentTo: "string (email)",
       generatedAt: "string (ISO 8601)",
+      metadata: {
+        cost: "string (USD amount)",
+        protocol: "string (x402 version)",
+        network: "string (blockchain network)",
+        facilitator: "string (facilitator service)",
+        timestamp: "string (ISO 8601)",
+        message: "string (payment confirmation)",
+        settlement: {
+          transaction: "string (transaction hash)",
+          blockNumber: "string (block number)",
+          explorer: "string (block explorer URL)",
+          payer: "string (payer address)",
+        },
+      },
     },
   });
 }
